@@ -1,0 +1,297 @@
+﻿<?php define('access',"False");
+require_once ("include/connect.php"); require_once ("include/tarihfonksiyonu.php"); require_once ("include/zamanfonksiyonu.php");
+$url 		= htmlspecialchars($_GET['id'], ENT_QUOTES, 'utf-8');
+$ilanCek 	= $conn->prepare("select * from uyeler where id=?");
+$ilanCek->execute(array($url));
+$ilanYazdir = $ilanCek->fetch();
+$EscID  	= $ilanYazdir["id"];
+$TelData 	= $ilanYazdir['telefon'];
+$GsmYaz 	= substr($TelData,0,4)." ".substr($TelData,4,3)." ".substr($TelData,7,2)." ".substr($TelData,9,2);
+
+if(!$url){
+header("Location:".$SiteBilgi["siteurl"].""); exit();
+}
+if($EscID != $url){
+header("Location:".$SiteBilgi["siteurl"].""); exit();
+}
+
+$siteSor	 = $conn->prepare("select * from linkler where id=?");
+$siteSor->execute(array($ilanYazdir['odak_link']));
+$siteCek 	= $siteSor->fetch();
+$icerikyazi	= $ilanYazdir['aciklama'];
+$bul 		= $ilanYazdir['odak_kelime'];
+if($ilanYazdir['odak_link']!==''){
+$degistir   = "<strong><a href='".$siteCek['url']." 'rel='nofollow' target='_blank'> $bul </a></strong>";
+}else{
+$degistir   = "<strong><a href='anasayfa'> $bul </a></strong>";	
+}
+$DegisenYazi 	= str_ireplace($bul, $degistir, $icerikyazi);
+$ResimSorgusu  	= $conn->prepare("select * from resimler where uye_id = ? order by id asc limit 1");
+$ResimSorgusu->execute(array($EscID));
+$ResimCek = $ResimSorgusu->fetch(); 
+$Resimm	 	= $ResimCek['resim'];
+?>
+<?php
+$hit  = $ilanYazdir['hit'];
+$ekle = $hit+1;
+$guncelle = $conn->prepare("Update uyeler set hit=? Where id=? ");
+$guncelle->execute(array($ekle,$EscID));
+date_default_timezone_set('Europe/Istanbul');
+$Bugun = date("d-m-Y");
+$GunlukSorgula = $conn->prepare("select * from gunluk where id = ? ");
+$GunlukSorgula->execute(array($EscID));
+$Karsilastir = $GunlukSorgula->rowcount();
+if($Karsilastir < 1){
+$girdi = $conn->prepare("insert into gunluk (id,hit,tarih) values (?,?,?)");
+$girdi->execute(array($EscID,'1',$Bugun));
+}elseif($Karsilastir > 0){
+$row_gunluk  = $GunlukSorgula->fetch();
+$Gun		= $row_gunluk['tarih'];
+if($Gun == $Bugun){	
+$Gunluk		= $row_gunluk['hit'];
+$Arttir		= $Gunluk+1;
+$guncel = $conn->prepare("update gunluk set hit = ? where id = ? ");
+$guncel->execute(array($Arttir,$EscID));
+}elseif($Gun != $Bugun){
+$kaydet = $conn->prepare("update gunluk set hit = ? , tarih = ? where id = ? ");
+$kaydet->execute(array('1',$Bugun,$EscID));
+}
+}
+$GunlukHitSor = $conn->prepare("select * from gunluk where id = ?");
+$GunlukHitSor->execute(array($EscID));
+$GunlukHit    = $GunlukHitSor->fetch();
+?>
+<!DOCTYPE html>
+<html lang="tr">
+<header>
+	
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+	<base href="<?php echo $SiteBilgi["siteurl"]; ?>">
+	
+    <title><?php echo $EtiketBaslik; ?> <?php echo $ilanYazdir['isim']; ?> <?php echo $kat["baslik"]; ?> <?php echo $yaziYaz["baslik"]; ?> <?php echo $SiteBilgi["siteadi"]; ?> <?php echo $SiteBilgi["logoyazi"]; ?></title>
+	
+	<meta name="description" content="<?php echo $SiteBilgi["meta"]; ?>" />
+	<meta name="keywords" content="<?php echo $SiteBilgi["anahtar"]; ?>" />
+	
+	<meta name="owner" content="<?php echo $SiteBilgi["logoyazi"]; ?>" />	
+	<meta name="author" content="<?php echo $SiteBilgi["logoyazi"]; ?>">
+
+	<meta name="copyright" content="2022" />
+    <meta name="document-state" content="dynamic"/>
+    <meta name="robots" content="index, follow">
+    <meta name="rating" content="general" />
+    <meta name="language" content="tr" />
+    <meta name="revisit-after" content="7 days" />
+    <meta name="distribution" content="global, locale" />
+    <meta http-equiv="cache-control" content="public" />
+    <meta http-equiv="pragma" content="no-cache" />
+	<meta http-equiv="expires" content="2022" />
+	<link rel="canonical" href="<?php echo $SiteBilgi["siteurl"]; ?>">
+	<link rel="alternate" type="application/rss+xml" title="Sitemap" href="<?php echo $SiteBilgi["siteurl"]; ?>/sitemap.xml"/>	
+	<meta content="<?php echo $SiteBilgi["siteurl"]; ?>" itemprop="image">
+	<meta name="google" content="notranslate" />
+	
+	<meta name="theme-color" content="<?php echo $SiteBilgi["renk_headerarka"]; ?>"/>
+	<meta name="msapplication-navbutton-color" content="<?php echo $SiteBilgi["renk_headerarka"]; ?>">
+	<meta name="apple-mobile-web-app-status-bar-style" content="<?php echo $SiteBilgi["renk_headerarka"]; ?>">
+	<meta name="msapplication-TileColor" content="<?php echo $SiteBilgi["renk_headerarka"]; ?>">
+	
+	<meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="400" />
+    <meta property="og:image:height" content="400" />
+	<meta property="og:title" content="<?php echo $EtiketBaslik; ?> <?php echo $ilanYazdir['isim']; ?> <?php echo $kat["baslik"]; ?> <?php echo $yaziYaz["baslik"]; ?> <?php echo $SiteBilgi["siteadi"]; ?> <?php echo $SiteBilgi["logoyazi"]; ?>" />
+	<meta property="og:description" content="<?php echo $SiteBilgi["anahtar"]; ?>" />
+	<meta property="og:url" content="<?php echo $SiteBilgi["siteurl"]; ?>img/escort.webp" />
+
+	<link rel="amphtml" href="<?php echo $SiteBilgi["ampurl"]; ?>" />
+	
+	<link rel="shortcut icon" href="<?php echo $SiteBilgi["siteurl"]; ?>img/icon/apple-touch-icon.png">
+	<link rel="icon" type="image/x-icon" href="<?php echo $SiteBilgi["siteurl"]; ?>img/icon/apple-touch-icon.png" />
+	<link rel="icon" type="image/png" href="<?php echo $SiteBilgi["siteurl"]; ?>img/icon/apple-touch-icon.png" />
+	<link rel="icon" type="image/x-icon" href="<?php echo $SiteBilgi["siteurl"]; ?>img/icon/apple-touch-icon.png" />
+	<link rel="apple-touch-icon-precomposed" sizes="114x114" href="<?php echo $SiteBilgi["siteurl"]; ?>img/icon/apple-touch-icon.png">
+	<link rel="apple-touch-icon-precomposed" sizes="72x72" href="<?php echo $SiteBilgi["siteurl"]; ?>img/icon/apple-touch-icon.png">
+	<link rel="apple-touch-icon-precomposed" href="<?php echo $SiteBilgi["siteurl"]; ?>img/icon/apple-touch-icon.png">
+	<link rel="apple-touch-icon" sizes="180x180" href="<?php echo $SiteBilgi["siteurl"]; ?>img/icon/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="<?php echo $SiteBilgi["siteurl"]; ?>img/icon/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="<?php echo $SiteBilgi["siteurl"]; ?>img/icon/favicon-16x16.png">
+	<link rel="manifest" href="<?php echo $SiteBilgi["siteurl"]; ?>img/icon/site.webmanifest">
+	<link rel="mask-icon" href="<?php echo $SiteBilgi["siteurl"]; ?>img/icon/safari-pinned-tab.svg" color="<?php echo $SiteBilgi["renk_headerarka"]; ?>">
+	
+	<script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "url": "<?php echo $SiteBilgi["siteurl"]; ?>",
+      "logo": "<?php echo $SiteBilgi["siteurl"]; ?>img/escort.webp"
+    }
+    </script>
+    
+    <script type="text/javascript">
+		$(function() {
+			var pageTitle = $("title").text();
+			$(window).blur(function() {
+				$("title").text("Marmaris Elit Eskort");
+			});
+			$(window).focus(function() {
+				$("title").text(pageTitle);
+			});
+		});
+	</script>
+	
+	<link rel="icon" href="img/favicon.png">
+	<link rel="stylesheet" href="css/bootstrap.css" rel="stylesheet">
+	<link rel="stylesheet" type="text/css" href="css/site.php">
+	<link rel="stylesheet" href="vendor/colorbox/colorbox.css" />
+	<link rel="stylesheet" href="vendor/lity/lity.css"/>	
+	<link rel="stylesheet" type="text/css" href="css/main.css">
+	<link rel="stylesheet" type="text/css" href="font-awesome/css/font-awesome.css">
+	<link  href="vendor/fotorama/fotorama.css" rel="stylesheet">
+	<script src="vendor/fotorama/fotorama.js"></script>	
+	<script src="vendor/colorbox/jquery.colorbox.js"></script>
+	<script src="vendor/lity/jquery.js"></script>
+	<script src="js/jquery-1.10.2.js"></script>
+	
+</header>
+<body id="top">
+<?php include('include/ustmenu.php'); ?>
+<div class="Header_Alani">
+<h1><?php echo $ilanYazdir['isim']; ?></h1>
+</div>
+<div class="container">
+<?php if($ilanYazdir["durum"]!="Yayında"){ ?>
+<div class="col-md-8">
+<div class="panel panel-default"><div class="panel-body">
+<div class="alert alert-warning text-center"><strong><span class="glyphicon glyphicon-lock"></span><br/><br/><?php echo $ilanYazdir['isim']; ?> profiline ait bilgiler gizlenmiştir.</strong><br/> İlanın süresi dolmuş veya yayından kaldırılmış olabilir.</div>
+<hr>
+<div class="blink" style="text-align:center;">	
+<a href="anasayfa.html" class="btn btn-md btn-default"><strong>Anasayfa</strong></a>
+</div>
+</div></div>
+<?php 
+$sorustur = $conn->prepare("select * from blog where durum = ? and kategori = ? order by rand() limit 8");
+$sorustur->execute(array('Aktif', $ilanYazdir['kategori']));
+while($Makale = $sorustur->fetch()){
+$kategoriSorgula = $conn->prepare("select * from kategori where id = ?");
+$kategoriSorgula->execute(array($Makale['kategori']));
+$kateqoriCek = $kategoriSorgula->fetch();	
+?>			
+<div class="panel panel-default panel-stili">
+<div class="panel-body">
+<div class="media">
+<a class="pull-left" href="yazi/<?php echo $Makale['seo']; ?>/<?php echo $Makale['id']; ?>.html">
+<div class="cerceve"><img src="blogresim/<?php echo $Makale['resim']; ?>" alt="<?php echo $Makale['baslik']; ?>" class="resim"></div>
+</a>
+<div class="panel-body">
+<h4 class="media-heading"><a href="yazi/<?php echo $Makale['seo']; ?>/<?php echo $Makale['id']; ?>.html"><?php echo $Makale['baslik']; ?></a></h4>
+<p class="detay"><?php $metin = mb_substr($Makale['aciklama'],0,900).'... '; echo strip_tags($metin); ?> <a href="yazi/<?php echo $Makale['seo']; ?>/<?php echo $Makale['id']; ?>.html"> okumaya devam et</a></p><hr/>
+<ul class="list-inline list-unstyled">
+<small><i class="glyphicon glyphicon-calendar"></i>  <?php echo turkcetarih('j F Y',$Makale['yil'].'-'.$Makale['tarih']); ?></small>
+<li>|</li>
+<small><i class="glyphicon glyphicon-th-list"></i> <a href="kategori/<?php echo $kateqoriCek['seo']; ?>/<?php echo $kateqoriCek['id']; ?>.html"><?php echo $kateqoriCek['baslik']; ?></a></small>
+<li>|</li>
+<small><i class="glyphicon glyphicon-eye-open"></i> <?php echo $Makale['hit']; ?></small>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<?php } ?>
+</div>
+<?php }else{ ?>
+<div class="col-md-8">	
+<div class="panel panel-danger">
+<div class="panel-body" style="background:#222;">
+<?php
+$ResimSorgu  	= $conn->prepare("select * from resimler where uye_id = ? order by id asc");
+$ResimSorgu->execute(array($url));
+$count = $ResimSorgu->rowcount();
+if ($count > 0){ 
+?>
+<div class="fotorama" data-fit="cover" data-allowfullscreen="native" data-width="100%" data-maxwidth="100%" data-ratio="16/9" data-allowfullscreen="true" data-nav="thumbs" data-loop="true" data-autoplay="true">
+<?php while($UyeResimCek = $ResimSorgu->fetch()){ 
+$id 		= $UyeResimCek['id'];
+$resim	 	= $UyeResimCek['resim']; ?>
+<img src="modelresim/<?php echo $resim; ?>" data-caption="" data-fit="contain" width="100%" height="auto">
+<?php } ?>	 
+</div>
+<?php }else{ ?>
+<div class="fotorama" data-fit="cover" data-allowfullscreen="native" data-width="100%" data-maxwidth="100%" data-ratio="16/9" data-allowfullscreen="true" data-nav="thumbs" data-loop="true" data-autoplay="true">
+<img src="img/resimyok.png" data-caption="" data-fit="contain" width="100%" height="auto">
+</div>
+<button type="button" class="btn btn-labeled btn-primary prev pull-left"><span class="btn-label"><i class="fa fa-arrow-left"></i></span>Önceki</button>
+<button type="button" class="btn btn-labeled btn-primary next pull-right">Sonraki<span class="btn-label btn-label-right"><i class="fa fa-arrow-right"></i></span></button>
+</div>
+<?php } ?>
+</div>					
+</div>
+<!-- PROFİL RESİM SON -->
+<!-- BİLGİ BAŞ -->	
+<div class="panel panel-default panel-stili">
+<div class="panel-heading">
+<h1 class="panel-title"><center><?php echo $kateqoriCek['baslik']; ?></center></h1>
+</div>
+<div class="panel-body">
+<p><?php echo $DegisenYazi; ?></p>	
+<hr>
+<center>
+<a class="btn btn-md btn-success" href="https://api.whatsapp.com/send?phone=9<?php echo $ilanYazdir['telefon']; ?>&amp;text=Merhaba Numaranızı *<?php echo htmlspecialchars($_SERVER["HTTP_HOST"], ENT_QUOTES, 'utf-8'); ?>* Web Sitesindeki İlanınızdan Aldım."><i class="glyphicon glyphicon-earphone"></i> WHATSAPP'DAN ULAŞ</a>
+<a class="btn btn-md btn-primary" rel="nofollow" href="tel:<?php echo $ilanYazdir['telefon']; ?>"><i class="glyphicon glyphicon-phone"></i> TIKLA HEMEN ARA</a>
+</center>
+<hr>
+<hr>
+<div class="container-fluid">
+<div class="row">
+<div class="col-md-12 text-center">
+<div class="da-share-html da-fb da-tw da-vk da-ok da-pi"></div>
+</div>
+</div>
+</div>
+<hr>
+<div class="col-md-12" style="text-align:center;">	
+<a href="anasayfa.html" class="btn btn-md btn-danger"><strong class=" blink">VİTRİN İLANLARA<br> GERİ DÖNMEK İÇİN TIKLAYIN</strong></a>
+</div>
+</div>
+<div class="item-content-block tags">
+<?php 
+$TagSql = $conn->prepare("SELECT DISTINCT seo id,baslik,seo,konu FROM uyeetiketler WHERE konu = ?");  
+$TagSql->execute(array($ilanYazdir['id']));
+while ( $etiket = $TagSql->fetch() ){
+echo '<a class="btn btn-xs btn-default" href="ilan-etiket/'.$etiket['seo'].'.html" data-toggle="tooltip" title="'.$etiket['baslik'].'"/>'.$etiket['baslik'].'</a> '; 
+} 
+?>
+</div>
+<div class="panel-footer">
+<center>
+<small><i class="glyphicon glyphicon-calendar"></i> <strong>İlan Tarihi : <?php echo turkcetarih('j F Y',$ilanYazdir['tarih']); ?></strong> <small>(<?php echo XzamanOnce($ilanYazdir['tarih']); ?>)</small></small>
+<br>
+<small><i class="glyphicon glyphicon-stats"></i> <strong>Bugün <?php echo $GunlukHit['hit']; ?> - Toplam <?php echo $ilanYazdir['hit']; ?> ziyaretçi</strong></small>
+</center>
+</div>
+</div>
+
+<div class="clear:both;"></div>
+</div>
+<?php } ?>
+<div class="clear:both;"></div>
+<div class="col-md-4">	
+<div class="panel panel-default panel-stili">
+<div class="panel-heading">
+<h3 class="panel-title"><center>İlan Konumu</center></h3>
+</div>
+<div class="panel-body">
+<iframe src="https://www.google.com/maps/embed/v1/place?key=<?php echo $SiteBilgi['mapsapi']; ?>&q=<?php echo $ilanYazdir['semt']; ?>+<?php echo $ilanYazdir['sehir']; ?>" width="100%" height="300" frameborder="0" style="border:0" allowfullscreen></iframe>	 
+</div>
+</div>		
+<?php include('include/sidebar.php'); ?>
+</div>		
+<div class="temizle"></div>
+<?php include('include/alt.php'); ?>
+</div>
+
+<script type="text/javascript" src="js/jquery.da-share.js?v2"></script>
+<script src="js/bootstrap.js"></script>
+</body>
+</html>

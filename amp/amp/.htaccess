@@ -1,0 +1,7 @@
+RewriteEngine On
+RewriteRule ^Blog.html$ blog.php [L,NC]
+RewriteRule ^kategori-(.*)-(.*).html kategori.php?seo=$1&id=$2 [L,NC]
+RewriteRule ^ilan-(.*)-(.*).html escortdetay.php?seo=$1&id=$2 [L,NC]
+RewriteRule ^yazi-(.*)-(.*).html blogdetay.php?seo=$1&id=$2 [L,NC]
+RewriteRule ^etiket-(.*).html etiket.php?etiket=$1 [NC]
+RewriteRule ^Tag-(.*).html tags.php?etiket=$1 [NC]

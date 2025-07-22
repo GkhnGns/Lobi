@@ -1,0 +1,7 @@
+User-agent: *
+
+Allow: /
+
+
+
+Sitemap: https://www.elaziglobi.com//sitemap.xml

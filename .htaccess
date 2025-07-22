@@ -1,0 +1,27 @@
+RewriteEngine on
+
+RewriteRule ^anasayfa.*.html$ index.php [L,NC]
+RewriteRule ^index.html.*$ index.php [L,NC]
+RewriteRule ^makaleler.*.html$ blog.php [L,NC]
+RewriteRule ^iletisim.*.html$ iletisim.php [L,NC]
+
+RewriteRule ^ilanara.*.html$ ilanara.php [NC]
+RewriteRule ^etiketara.*.html$ etiketara.php [NC]
+RewriteRule ^sitemap.xml sitemap.php [NC]
+RewriteRule ^feed rss.php [NC]
+RewriteRule ^panel.*.html$ panel/giris.php [L,NC]
+
+RewriteRule ^kategori/(.*)/(.*)$ kategoridetay.php?seo=$1&id=$2 [L,QSA,NC]
+RewriteRule ^ilan/(.*)/(.*).html$ escortdetay.php?seo=$1&id=$2 [L,QSA]
+RewriteRule ^yazi/(.*)/(.*).html$ blogdetay.php?seo=$1&id=$2 [L,QSA,NC]
+RewriteRule ^etiket/(.*).html$ etiketsayfasi.php?etiket=$1 [L,NC,QSA]
+RewriteRule ^ilan-etiket/(.*).html$ ilanetiketsayfasi.php?etiket=$1 [L,NC,QSA]
+
+<IfModule mod_headers.c>
+Header set X-XSS-Protection "1; mode=block"
+Header always append X-Frame-Options SAMEORIGIN
+Header append X-FRAME-OPTIONS "SAMEORIGIN"
+Header set X-Content-Type-Options nosniff
+</IfModule>
+
+ErrorDocument 404 https://www.elaziglobi.com/
